@@ -91,7 +91,7 @@ Add the repo to your project inside your `pom.xml` file
 <dependency>
     <groupId>com.sipios</groupId>
     <artifactId>spring-search</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.6</version>
 </dependency>
 ```
 
@@ -124,56 +124,94 @@ fun yourFunctionNameHere(@SearchSpec specs: Specification<YourModel>): ResponseE
 }
 ```
 
-1. Using the equal operator `:`  
-Request : `/cars?search=color:Red`  
-![equal operator example](./docs/images/equal-example.gif)
+## Operators
+<!-- table of operators -->
+| Operator       | Description                     | Example                                            |
+|----------------|---------------------------------|----------------------------------------------------|
+| `:`            | Equal                           | `color:Red`                                        |
+| `!`            | Not equal                       | `color!Red`                                        |
+| `>`            | Greater than                    | `creationyear>2017`                                |
+| `>:`           | Greater than eq                 | `creationyear>2017`                                |
+| `<`            | Less than                       | `price<100000`                                     |
+| `<:`           | Less than eq                    | `price<100000`                                     |
+| `*`            | Starts with                     | `brand:*Martin`                                    |
+| `*`            | Ends with                       | `brand:Aston*`                                     |
+| `*`            | Contains                        | `brand:*Martin*`                                   |
+| `OR`           | Logical OR                      | `color:Red OR color:Blue`                          |
+| `AND`          | Logical AND                     | `brand:Aston* AND price<300000`                    |
+| `IN`           | Value is in list                | `color IN ['Red', 'Blue']`                         |
+| `NOT IN`       | Value is not in list            | `color NOT IN ['Red', 'Blue']`                     |
+| `IS EMPTY`     | Collection field is empty       | `cars IS EMPTY`                                    |
+| `IS NOT EMPTY` | Collection field is not empty   | `cars IS NOT EMPTY`                                |
+| `IS NULL`      | Field is null                   | `brand IS NULL`                                    |
+| `IS NOT NULL`  | Field is not null               | `brand IS NOT NULL`                                |
+| `()`           | Parenthesis                     | `brand:Nissan OR (brand:Chevrolet AND color:Blue)` |
+| `BETWEEN`      | Value is between two values     | `creationyear BETWEEN 2017 AND 2019`               |
+| `NOT BETWEEN`  | Value is not between two values | `creationyear NOT BETWEEN 2017 AND 2019`           |
 
-2. Using the not equal operator `!`  
-Request : `/cars?search=color!Red`
-![not equal operator example](./docs/images/not-equal-example.gif)
 
-3. Using the greater than operator `>`  
-Request : `/cars?search=creationyear>2017`  
-![greater than operator example](./docs/images/greater-than-example.gif)
+## Examples
 
-4. Using the less than operator `<`  
-Request : `/cars?search=price<100000`  
-![less than operator example](./docs/images/less-than-example.gif)
-
-5. Using the starts with operator `*`  
-*For the ends with operator, simply place `*` at the beginning of the word*.  
-*For the contains operator, simply place `*` at the beginning and the end of the word*.  
-Request : `/cars?search=brand:Aston*`  
-![starts with operator example](./docs/images/starts-with-example.gif)
-
-6. Using the `OR` operator  
-Request : `/cars?search=color:Red OR color:Blue`  
-![or operator example](./docs/images/or-example.gif)
-
-7. Using the `AND` operator  
-Request : `/cars?search=brand:Aston* AND price<300000`  
-![and operator example](./docs/images/and-example.gif)
-
-8. Using parenthesis  
+1. Using parenthesis  
 Request : `/cars?search=( brand:Nissan OR brand:Chevrolet ) AND color:Blue`  
 *Note: Spaces inside the parenthesis are not necessary*
 ![parenthesis example](./docs/images/parenthesis-example.gif)
-
-9. Using space in nouns  
+2. Using space in nouns  
 Request : `/cars?search=model:'Spacetourer Business Lounge'`  
 ![space example](./docs/images/space-example.gif)
-
-10. Using special characters  
+3. Using special characters  
 Request: `/cars?search=model:中华V7`
 ![special characters example](./docs/images/special-characters-example.gif)
-
-11. Using deep fields  
+4. Using deep fields  
 Request : `/cars?search=options.transmission:Auto`
 ![deep field example](./docs/images/deep-field-example.gif)
-
-12. Complex example  
+5. Complex example  
 Request : `/cars?search=creationyear:2018 AND price<300000 AND (color:Yellow OR color:Blue) AND options.transmission:Auto`
 ![complex example](./docs/images/complex-example.gif)
+15. Using the BETWEEN operator
+Request : `/cars?search=creationyear BETWEEN 2017 AND 2019`
+
+## Blocking the search on a field
+```java
+@GetMapping
+public List<User> getUsers(@SearchSpec(blackListedFields = {"password"}) Specification<User> specs) {
+  return userRepository.findAll(Specification.where(specs));
+}
+```
+
+<!-- TROUBLESHOOTING -->
+## Troubleshooting
+
+If you get the following error ⬇️
+
+> No primary or default constructor found for interface org.springframework.data.jpa.domain.Specification
+
+You are free to opt for either of the two following solutions :
+1. Add a `@Configuration` class to add our argument resolver to your project
+```kotlin
+// Kotlin
+@Configuration
+class SpringSearchResolverConf : WebMvcConfigurer {
+  override fun addArgumentResolvers(argumentResolvers: MutableList<HandlerMethodArgumentResolver>) {
+    argumentResolvers.add(SearchSpecificationResolver())
+  }
+}
+```
+```java
+// Java
+@Configuration
+public class SpringSearchResolverConf implements WebMvcConfigurer {
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+        argumentResolvers.add(new SearchSpecificationResolver());
+    }
+}
+```
+
+2. Add a `@ComponentScan` annotation to your project configuration class
+```java
+@ComponentScan(basePackages = {"com.your-application", "com.sipios.springsearch"})
+```
 
 <!-- ROADMAP -->
 ## Roadmap

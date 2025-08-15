@@ -4,6 +4,7 @@ Copyright (c) 2019, Michael Mollard
 
 grammar Query;
 
+// syntactic rules
 input
    : query EOF
    ;
@@ -15,11 +16,23 @@ query
    ;
 
 criteria
-   : key op value
+   : key (IN | NOT_IN) array #eqArrayCriteria
+   | key op value #opCriteria
+   | key (BETWEEN | NOT_BETWEEN) left=value AND right=value #betweenCriteria
+   | key (IS | IS_NOT) is_value #isCriteria
+   ;
+
+is_value
+   : EMPTY
+   | NULL
    ;
 
 key
    : IDENTIFIER
+   ;
+
+array
+   : LBRACKET (value (',' value)* )? RBRACKET
    ;
 
 value
@@ -28,18 +41,25 @@ value
    | ENCODED_STRING
    | NUMBER
    | BOOL
-   ;
+  ;
 
 op
    : EQ
    | GT
+   | GTE
    | LT
+   | LTE
    | NOT_EQ
    ;
 
+// lexical rules
 BOOL
     : 'true'
     | 'false'
+    ;
+
+NULL
+    : 'NULL'
     ;
 
 STRING
@@ -132,26 +152,64 @@ RPAREN
    : ')'
    ;
 
+LBRACKET
+   : '['
+   ;
+
+RBRACKET
+    : ']'
+    ;
 
 GT
    : '>'
    ;
 
+GTE
+   : '>:'
+   ;
 
 LT
    : '<'
    ;
 
+LTE
+   : '<:'
+   ;
 
 EQ
    : ':'
    ;
 
+IS
+   : 'IS'
+   ;
+
+IS_NOT
+    : 'IS NOT'
+    ;
+
+EMPTY
+   : 'EMPTY'
+   ;
 
 NOT_EQ
    : '!'
    ;
 
+BETWEEN
+   : 'BETWEEN'
+   ;
+
+NOT_BETWEEN
+   : 'NOT BETWEEN'
+   ;
+IN
+   : 'IN'
+   ;
+
+NOT_IN
+   : 'NOT IN'
+   ;
 
 fragment POINT
    : '.'
@@ -161,9 +219,10 @@ IDENTIFIER
    : [A-Za-z0-9.]+
    ;
 
-ENCODED_STRING
-   : ~([ :<>!()])+
+ENCODED_STRING //anything but these characters :<>!()[], and whitespace
+   : ~([ ,:<>!()[\]])+
    ;
+
 
 LineTerminator
 : [\r\n\u2028\u2029] -> channel(HIDDEN)

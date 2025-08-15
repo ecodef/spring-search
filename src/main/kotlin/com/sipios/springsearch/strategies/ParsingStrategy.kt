@@ -14,7 +14,8 @@ import java.util.Date
 import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
-
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
 interface ParsingStrategy {
     /**
      * Method to parse the value specified to the corresponding strategy
@@ -25,6 +26,10 @@ interface ParsingStrategy {
      */
     fun parse(value: String?, fieldClass: KClass<out Any>): Any? {
         return value
+    }
+
+    fun parse(value: List<*>?, fieldClass: KClass<out Any>): Any? {
+        return value?.map { parse(it.toString(), fieldClass) }
     }
 
     /**
@@ -45,24 +50,69 @@ interface ParsingStrategy {
         value: Any?
     ): Predicate? {
         return when (ops) {
+            SearchOperation.IN_ARRAY -> {
+                val inClause: CriteriaBuilder.In<Any> = getInClause(builder, path, fieldName, value)
+                inClause
+            }
+
+            SearchOperation.NOT_IN_ARRAY -> {
+                val inClause: CriteriaBuilder.In<Any> = getInClause(builder, path, fieldName, value)
+                builder.not(inClause)
+            }
+
+            SearchOperation.IS -> {
+                if (value == SearchOperation.NULL) {
+                    builder.isNull(path.get<Any>(fieldName))
+                } else {
+                    // we should not call parent method for collection fields
+                    // so this makes no sense to search for EMPTY with a non-collection field
+                    throw ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Unsupported operation $ops $value for field $fieldName")
+                }
+            }
+            SearchOperation.IS_NOT -> {
+                if (value == SearchOperation.NULL) {
+                    builder.isNotNull(path.get<Any>(fieldName))
+                } else {
+                    // we should not call parent method for collection fields
+                    // so this makes no sense to search for NOT EMPTY with a non-collection field
+                    throw ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Unsupported operation $ops $value for field $fieldName")
+                }
+            }
+
             SearchOperation.EQUALS -> builder.equal(path.get<Any>(fieldName), value)
             SearchOperation.NOT_EQUALS -> builder.notEqual(path.get<Any>(fieldName), value)
-            SearchOperation.STARTS_WITH -> builder.like(path.get(fieldName), "$value%")
-            SearchOperation.ENDS_WITH -> builder.like(path.get(fieldName), "%$value")
+            SearchOperation.STARTS_WITH -> builder.like(path[fieldName], "$value%")
+            SearchOperation.ENDS_WITH -> builder.like(path[fieldName], "%$value")
             SearchOperation.CONTAINS -> builder.like((path.get<String>(fieldName).`as`(String::class.java)), "%$value%")
-            SearchOperation.DOESNT_START_WITH -> builder.notLike(path.get(fieldName), "$value%")
-            SearchOperation.DOESNT_END_WITH -> builder.notLike(path.get(fieldName), "%$value")
+            SearchOperation.DOESNT_START_WITH -> builder.notLike(path[fieldName], "$value%")
+            SearchOperation.DOESNT_END_WITH -> builder.notLike(path[fieldName], "%$value")
             SearchOperation.DOESNT_CONTAIN -> builder.notLike(
                 (path.get<String>(fieldName).`as`(String::class.java)),
                 "%$value%"
             )
+
             else -> null
         }
     }
 
+    fun getInClause(
+        builder: CriteriaBuilder,
+        path: Path<*>,
+        fieldName: String,
+        value: Any?
+    ): CriteriaBuilder.In<Any> {
+        val inClause: CriteriaBuilder.In<Any> = builder.`in`(path.get(fieldName))
+        val values = value as List<*>
+        values.forEach { inClause.value(it) }
+        return inClause
+    }
+
     companion object {
-        fun getStrategy(fieldClass: KClass<out Any>, searchSpecAnnotation: SearchSpec): ParsingStrategy {
+        fun getStrategy(fieldClass: KClass<out Any>, searchSpecAnnotation: SearchSpec, isCollectionField: Boolean): ParsingStrategy {
             return when {
+                isCollectionField -> CollectionStrategy()
                 fieldClass == Boolean::class -> BooleanStrategy()
                 fieldClass == Date::class -> DateStrategy()
                 fieldClass == Double::class -> DoubleStrategy()
