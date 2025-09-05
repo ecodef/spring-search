@@ -7,6 +7,8 @@ import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import jakarta.persistence.metamodel.Attribute
+import jakarta.persistence.metamodel.ManagedType
 import java.util.ArrayList
 import kotlin.reflect.KClass
 import org.springframework.data.jpa.domain.Specification
@@ -31,11 +33,13 @@ class SpecificationImpl<T>(private val criteria: SearchCriteria, private val sea
         val nestedKey = criteria.key.split(".")
         val nestedRoot = getNestedRoot(root, nestedKey)
         val criteriaKey = nestedKey[nestedKey.size - 1]
-        val fieldClass = nestedRoot.get<Any>(criteriaKey).javaType.kotlin
-        val isCollectionField = isCollectionType(nestedRoot.javaType, criteriaKey)
+        val attribute = getAttributeForField(nestedRoot, criteriaKey)
+        val attributeName = attribute?.name ?: criteriaKey
+        val fieldClass = getPathForField(nestedRoot, attribute).javaType.kotlin
+        val isCollectionField = isCollectionType(nestedRoot.javaType, attributeName)
         val strategy = ParsingStrategy.getStrategy(fieldClass, searchSpecAnnotation, isCollectionField)
-        val value = parseValue(strategy, fieldClass, criteriaKey, criteria.value)
-        return strategy.buildPredicate(builder, nestedRoot, criteriaKey, criteria.operation, value)
+        val value = parseValue(strategy, fieldClass, attributeName, criteria.value)
+        return strategy.buildPredicate(builder, nestedRoot, attributeName, criteria.operation, value)
     }
 
     private fun getNestedRoot(
@@ -44,11 +48,39 @@ class SpecificationImpl<T>(private val criteria: SearchCriteria, private val sea
     ): Path<*> {
         val prefix = ArrayList(nestedKey)
         prefix.removeAt(nestedKey.size - 1)
-        var temp: Path<*> = root
+        var path: Path<*> = root
         for (s in prefix) {
-            temp = temp.get<T>(s)
+            path = getPathForField(path, s)
         }
-        return temp
+        return path
+    }
+
+    private fun <T> getPathForField(path: Path<T>, field: String?): Path<T> {
+        val attribute = getAttributeForField(path, field)
+        return path[attribute?.name]
+    }
+
+    private fun <T> getPathForField(path: Path<T>, attribute: Attribute<*, *>?): Path<T> {
+        return path[attribute?.name]
+    }
+
+    private fun <T> getAttributeForField(
+        path: Path<T>,
+        field: String?
+    ): Attribute<in T, *>? {
+        if (path.model !is ManagedType<*>) {
+            return null
+        }
+
+        val model = path.model as ManagedType<T>
+        val attributes = model.attributes
+        val attribute = attributes.find { a -> a.name.contentEquals(field, true) }
+
+        if (attribute == null) {
+            throw NoSuchFieldException(String.format("Field %s not found on %s", field, path.toString()))
+        }
+
+        return attribute
     }
 
     private fun isCollectionType(clazz: Class<*>, fieldName: String): Boolean {
