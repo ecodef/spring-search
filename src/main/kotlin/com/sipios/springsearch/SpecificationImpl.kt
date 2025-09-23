@@ -11,6 +11,7 @@ import jakarta.persistence.metamodel.Attribute
 import jakarta.persistence.metamodel.ManagedType
 import java.util.ArrayList
 import kotlin.reflect.KClass
+import org.hibernate.metamodel.model.domain.PersistentAttribute
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
@@ -68,11 +69,7 @@ class SpecificationImpl<T>(private val criteria: SearchCriteria, private val sea
         path: Path<T>,
         field: String?
     ): Attribute<in T, *>? {
-        if (path.model !is ManagedType<*>) {
-            return null
-        }
-
-        val model = path.model as ManagedType<T>
+        val model = getModel(path) ?: return null
         val attributes = model.attributes
         val attribute = attributes.find { a -> a.name.contentEquals(field, true) }
 
@@ -81,6 +78,18 @@ class SpecificationImpl<T>(private val criteria: SearchCriteria, private val sea
         }
 
         return attribute
+    }
+
+    private fun <T> getModel(path: Path<T>): ManagedType<T>? {
+        if (path.model is ManagedType<*>) {
+            return path.model as ManagedType<T>
+        }
+
+        if (path.model is PersistentAttribute<*, *>) {
+            return (path.model as PersistentAttribute<*, *>).valueGraphType as ManagedType<T>
+        }
+
+        return null
     }
 
     private fun isCollectionType(clazz: Class<*>, fieldName: String): Boolean {
