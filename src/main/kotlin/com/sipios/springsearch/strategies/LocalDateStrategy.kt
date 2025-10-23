@@ -35,15 +35,11 @@ class LocalDateStrategy : ParsingStrategy {
     override fun parse(value: String?, fieldClass: KClass<out Any>): Any? {
         if (value == SearchOperation.NULL) return value
 
-        if (value == null) {
-            return null
-        }
-
-        if (value.length == LENGTH_LOCAL_DATE) {
+        if (value?.length == LENGTH_LOCAL_DATE) {
             return LocalDate.parse(value)
         }
 
-        if (value.length == LENGTH_LOCAL_DATE_TIME || value.length == 19) {
+        if (value?.length == LENGTH_LOCAL_DATE_TIME || value?.length == LENGTH_LOCAL_DATE_TIME - 10) {
             return LocalDateTime.parse(value).toLocalDate()
         }
 
