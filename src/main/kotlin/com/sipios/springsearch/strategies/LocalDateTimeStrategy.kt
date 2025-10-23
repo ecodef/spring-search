@@ -40,7 +40,7 @@ class LocalDateTimeStrategy : ParsingStrategy {
             return LocalDate.parse(value).atTime(0, 0)
         }
 
-        if (value.length == LENGTH_LOCAL_DATE_TIME) {
+        if (value.length == LENGTH_LOCAL_DATE_TIME || value.length == 19) {
             return LocalDateTime.parse(value)
         }
 

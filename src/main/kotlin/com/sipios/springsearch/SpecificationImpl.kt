@@ -117,7 +117,8 @@ class SpecificationImpl<T>(private val criteria: SearchCriteria, private val sea
         } catch (e: Exception) {
             throw ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Could not parse input for the field $criteriaKey as a ${fieldClass.simpleName}"
+                "Could not parse input for the field $criteriaKey as a ${fieldClass.simpleName}",
+                e
             )
         }
     }

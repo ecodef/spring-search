@@ -43,7 +43,7 @@ class LocalDateStrategy : ParsingStrategy {
             return LocalDate.parse(value)
         }
 
-        if (value.length == LENGTH_LOCAL_DATE_TIME) {
+        if (value.length == LENGTH_LOCAL_DATE_TIME || value.length == 19) {
             return LocalDateTime.parse(value).toLocalDate()
         }
 
