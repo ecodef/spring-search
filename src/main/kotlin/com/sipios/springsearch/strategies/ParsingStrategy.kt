@@ -10,12 +10,14 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.OffsetDateTime
 import java.util.Date
 import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
+
 interface ParsingStrategy {
     /**
      * Method to parse the value specified to the corresponding strategy
@@ -124,6 +126,7 @@ interface ParsingStrategy {
                 fieldClass == LocalDate::class -> LocalDateStrategy()
                 fieldClass == LocalTime::class -> LocalTimeStrategy()
                 fieldClass == LocalDateTime::class -> LocalDateTimeStrategy()
+                fieldClass == OffsetDateTime::class -> OffsetDateTimeStrategy()
                 fieldClass == Instant::class -> InstantStrategy()
                 fieldClass == UUID::class -> UUIDStrategy()
                 else -> StringStrategy(searchSpecAnnotation)
