@@ -7,6 +7,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.OffsetDateTime
 import java.util.Date
 import java.util.UUID
 import org.junit.jupiter.api.Assertions
@@ -901,6 +902,98 @@ class SpringSearchApplicationTest {
         val users = userRepository.findAll(specification)
         Assertions.assertEquals(2, users.size)
         Assertions.assertFalse(users.any { user -> user.userFirstName == "robot2" })
+
+        val specification2 = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedAt<:'2020-01-12'").build()
+        val users2 = userRepository.findAll(specification2)
+        Assertions.assertEquals(2, users2.size)
+        Assertions.assertFalse(users2.any { user -> user.userFirstName == "robot2" })
+
+        val specification3 = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedAt<:'2020-01-12T00:00:00.000Z'").build()
+        val users3 = userRepository.findAll(specification3)
+        Assertions.assertEquals(2, users3.size)
+        Assertions.assertFalse(users3.any { user -> user.userFirstName == "robot2" })
+    }
+
+    @Test
+    fun canGetUsersWithUpdatedOffsetDateTimeAtLessSearch() {
+        userRepository.save(Users(userFirstName = "HamidReza", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-10T10:15:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-11T10:20:30.000Z")))
+
+        val specification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedOffsetDateTimeAt<'2020-01-11T09:20:30.000Z'").build()
+        val hamidrezaUsers = userRepository.findAll(specification)
+        Assertions.assertEquals(1, hamidrezaUsers.size)
+        Assertions.assertEquals("HamidReza", hamidrezaUsers[0].userFirstName)
+    }
+
+    @Test
+    fun canGetUsersWithUpdatedOffsetDateTimeAtEqualSearch() {
+        userRepository.save(Users(userFirstName = "HamidReza", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-10T10:15:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-11T10:20:30.000Z")))
+
+        val specification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedOffsetDateTimeAt:'2020-01-10T10:15:30.000Z'").build()
+        val hamidrezaUsers = userRepository.findAll(specification)
+        Assertions.assertEquals(1, hamidrezaUsers.size)
+        Assertions.assertEquals("HamidReza", hamidrezaUsers[0].userFirstName)
+    }
+
+    @Test
+    fun canGetUsersWithUpdatedOffsetDateTimeAtNotEqualSearch() {
+        userRepository.save(Users(userFirstName = "HamidReza", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-10T10:15:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-11T10:20:30.000Z")))
+
+        val specification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedOffsetDateTimeAt!'2020-01-11T10:20:30.000Z'").build()
+        val hamidrezaUsers = userRepository.findAll(specification)
+        Assertions.assertEquals(1, hamidrezaUsers.size)
+        Assertions.assertEquals("HamidReza", hamidrezaUsers[0].userFirstName)
+    }
+
+    @Test
+    fun canGetUsersWithUpdatedOffsetDateTimeAtGreaterSearch() {
+        userRepository.save(Users(userFirstName = "HamidReza", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-10T10:15:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-11T10:20:30.000Z")))
+
+        val specification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedOffsetDateTimeAt>'2020-01-11T09:20:30.000Z'").build()
+        val robotUsers = userRepository.findAll(specification)
+        Assertions.assertEquals(1, robotUsers.size)
+        Assertions.assertEquals("robot", robotUsers[0].userFirstName)
+    }
+
+    @Test
+    fun canGetUsersWithUpdatedOffsetDateTimeAtGreaterThanEqualSearch() {
+        userRepository.save(Users(userFirstName = "john", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-10T10:15:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-11T10:20:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot2", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-12T10:20:30.000Z")))
+        val specification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedOffsetDateTimeAt>:'2020-01-11T10:20:30.000Z'").build()
+        val users = userRepository.findAll(specification)
+        Assertions.assertEquals(2, users.size)
+        Assertions.assertFalse(users.any { user -> user.userFirstName == "john" })
+    }
+
+    @Test
+    fun canGetUsersWithUpdatedOffsetDateTimeAtLessThanEqualSearch() {
+        userRepository.save(Users(userFirstName = "john", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-10T10:15:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-11T10:20:30.000Z")))
+        userRepository.save(Users(userFirstName = "robot2", updatedOffsetDateTimeAt = OffsetDateTime.parse("2020-01-12T10:20:30.000Z")))
+        val specification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedOffsetDateTimeAt<:'2020-01-11T10:20:30.000Z'").build()
+        val users = userRepository.findAll(specification)
+        Assertions.assertEquals(2, users.size)
+        Assertions.assertFalse(users.any { user -> user.userFirstName == "robot2" })
     }
 
     @Test
@@ -981,6 +1074,20 @@ class SpringSearchApplicationTest {
         val users = userRepository.findAll(specification)
         Assertions.assertEquals(2, users.size)
         Assertions.assertFalse(users.any { user -> user.userFirstName == "john" })
+
+        val specification2 = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedDateAt>:'2020-01-11T00:00:00'").build()
+        val users2 = userRepository.findAll(specification2)
+        Assertions.assertEquals(2, users2.size)
+        Assertions.assertFalse(users2.any { user -> user.userFirstName == "john" })
+
+        val specification3 = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("updatedDateAt>:'2020-01-11T00:00:00.000Z'").build()
+        val users3 = userRepository.findAll(specification3)
+        Assertions.assertEquals(2, users3.size)
+        Assertions.assertFalse(users3.any { user -> user.userFirstName == "john" })
     }
 
     @Test

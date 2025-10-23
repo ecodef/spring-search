@@ -11,6 +11,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.OffsetDateTime
 import java.util.Date
 import java.util.UUID
 
@@ -59,6 +60,9 @@ data class Users(
 
     @Column
     var updatedInstantAt: Instant = Instant.now(),
+
+    @Column
+    var updatedOffsetDateTimeAt: OffsetDateTime = OffsetDateTime.now(),
 
     @Column
     var validityDuration: Duration = Duration.ofDays(30),
