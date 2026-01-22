@@ -3,12 +3,18 @@ package com.sipios.springsearch
 import com.sipios.springsearch.anotation.SearchSpec
 import com.sipios.springsearch.grammar.QueryBaseVisitor
 import com.sipios.springsearch.grammar.QueryParser
+import com.sipios.springsearch.predicate.PredicateBuilder
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 
-class QueryVisitorImpl<T>(private val searchSpecAnnotation: SearchSpec) : QueryBaseVisitor<Specification<T>>() {
+class QueryVisitorImpl<T>(
+    private val searchSpecAnnotation: SearchSpec,
+    private val predicateBuilder: PredicateBuilder<T>
+) : QueryBaseVisitor<Specification<T>>() {
+
     private val valueRegExp = Regex(pattern = "^(?<prefix>\\*?)(?<value>.+?)(?<suffix>\\*?)$")
+
     override fun visitOpQuery(ctx: QueryParser.OpQueryContext): Specification<T> {
         val left = visit(ctx.left)
         val right = visit(ctx.right)
@@ -57,7 +63,7 @@ class QueryVisitorImpl<T>(private val searchSpecAnnotation: SearchSpec) : QueryB
             arrayValues.map { if (it.STRING() != null) clearString(it.text) else it.text }
         // there is no need for prefix and suffix (e.g. 'john*') in case of array value
         val criteria = SearchCriteria(key, op, valueAsList)
-        return SpecificationImpl(criteria, searchSpecAnnotation)
+        return SpecificationImpl(criteria, searchSpecAnnotation, predicateBuilder)
     }
 
     override fun visitBetweenCriteria(ctx: QueryParser.BetweenCriteriaContext): Specification<T> {
@@ -88,7 +94,7 @@ class QueryVisitorImpl<T>(private val searchSpecAnnotation: SearchSpec) : QueryB
         leftValue: String?
     ): SpecificationImpl<T> {
         val criteria = SearchCriteria(key, opLeft, leftValue)
-        return SpecificationImpl(criteria, searchSpecAnnotation)
+        return SpecificationImpl(criteria, searchSpecAnnotation, predicateBuilder)
     }
 
     override fun visitOpCriteria(ctx: QueryParser.OpCriteriaContext): Specification<T> {
@@ -100,7 +106,8 @@ class QueryVisitorImpl<T>(private val searchSpecAnnotation: SearchSpec) : QueryB
         }
         verifyBlackList(key)
         val matchResult = this.valueRegExp.find(value)
-        val op = SearchOperation.getSimpleOperation(ctx.op().text) ?: throw IllegalArgumentException("Invalid operation")
+        val op =
+            SearchOperation.getSimpleOperation(ctx.op().text) ?: throw IllegalArgumentException("Invalid operation")
         val criteria = SearchCriteria(
             key,
             op,
@@ -109,7 +116,7 @@ class QueryVisitorImpl<T>(private val searchSpecAnnotation: SearchSpec) : QueryB
             matchResult.groups["suffix"]!!.value
         )
 
-        return SpecificationImpl(criteria, searchSpecAnnotation)
+        return SpecificationImpl(criteria, searchSpecAnnotation, predicateBuilder)
     }
 
     private fun verifyBlackList(key: String?) {

@@ -4,6 +4,7 @@ import SyntaxErrorListener
 import com.sipios.springsearch.anotation.SearchSpec
 import com.sipios.springsearch.grammar.QueryLexer
 import com.sipios.springsearch.grammar.QueryParser
+import com.sipios.springsearch.predicate.PredicateBuilder
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.springframework.data.jpa.domain.Specification
@@ -13,9 +14,9 @@ import org.springframework.web.server.ResponseStatusException
 /**
  * Class used to parse a search query string and create a specification
  */
-class CriteriaParser<T>(searchSpecAnnotation: SearchSpec) {
+class CriteriaParser<T>(searchSpecAnnotation: SearchSpec, predicateBuilder: PredicateBuilder<T>) {
 
-    private val visitor = QueryVisitorImpl<T>(searchSpecAnnotation)
+    private val visitor = QueryVisitorImpl<T>(searchSpecAnnotation, predicateBuilder)
 
     /**
      * Lexer -> Parser -> Visitor are used to build the specification
