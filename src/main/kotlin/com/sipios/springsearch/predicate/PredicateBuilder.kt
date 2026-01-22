@@ -11,8 +11,6 @@ import jakarta.persistence.criteria.Root
 import jakarta.persistence.metamodel.Attribute
 import jakarta.persistence.metamodel.ManagedType
 import org.hibernate.metamodel.model.domain.PersistentAttribute
-import org.springframework.http.HttpStatus
-import org.springframework.web.server.ResponseStatusException
 import java.util.ArrayList
 import kotlin.reflect.KClass
 
@@ -26,8 +24,7 @@ open class PredicateBuilder<T> {
         builder: CriteriaBuilder
     ): Predicate? {
         val nestedKey = criteria.key.split(".")
-        val nestedRoots = getNestedRoots(root, nestedKey)
-        val nestedRoot = nestedRoots.last()
+        val nestedRoot = getNestedRoot(root, nestedKey)
         val criteriaKey = nestedKey[nestedKey.size - 1]
         val attribute = getAttributeForField(nestedRoot, criteriaKey)
         val attributeName = attribute?.name ?: criteriaKey
@@ -38,22 +35,19 @@ open class PredicateBuilder<T> {
         return strategy.buildPredicate(builder, nestedRoot, attributeName, criteria.operation, value)
     }
 
-    protected fun getNestedRoots(
+    protected fun getNestedRoot(
         root: Root<T>,
         key: List<String>
-    ): List<Path<*>> {
+    ): Path<*> {
         val prefix = ArrayList(key)
         prefix.removeAt(key.size - 1)
-        val paths = mutableListOf<Path<*>>()
         var path: Path<*> = root
 
-        paths.add(path)
         for (s in prefix) {
             path = getPathForField(path, s)
-            paths.add(path)
         }
 
-        return paths
+        return path
     }
 
     protected fun <T> getPathForField(path: Path<T>, field: String?): Path<T> {
@@ -117,8 +111,7 @@ open class PredicateBuilder<T> {
                 strategy.parse(value?.toString(), fieldClass)
             }
         } catch (e: Exception) {
-            throw ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
+            throw IllegalArgumentException(
                 "Could not parse input for the field $criteriaKey as a ${fieldClass.simpleName}",
                 e
             )
