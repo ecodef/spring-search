@@ -1,16 +1,20 @@
 package com.sipios.springsearch
 
 import com.sipios.springsearch.anotation.SearchSpec
+import com.sipios.springsearch.predicate.PredicateBuilder
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import org.springframework.data.jpa.domain.Specification
 
-class SpecificationsBuilder<U>(searchSpecAnnotation: SearchSpec) {
+class SpecificationsBuilder<U>(
+    searchSpecAnnotation: SearchSpec,
+    predicateBuilder: PredicateBuilder<U>
+) {
 
     private var specs: Specification<U> = NullSpecification()
-    private val parser: CriteriaParser<U> = CriteriaParser(searchSpecAnnotation)
+    private var parser: CriteriaParser<U> = CriteriaParser(searchSpecAnnotation, predicateBuilder)
 
     fun withSearch(search: String): SpecificationsBuilder<U> {
         specs = parser.parse(search)
@@ -27,6 +31,8 @@ class SpecificationsBuilder<U>(searchSpecAnnotation: SearchSpec) {
     fun build(): Specification<U> {
         return specs
     }
+
+    constructor(searchSpecAnnotation: SearchSpec) : this(searchSpecAnnotation, PredicateBuilder())
 }
 
 class NullSpecification<T> : Specification<T> {
