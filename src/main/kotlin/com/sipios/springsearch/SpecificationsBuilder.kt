@@ -8,18 +8,13 @@ import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import org.springframework.data.jpa.domain.Specification
 
-class SpecificationsBuilder<U>(private val searchSpecAnnotation: SearchSpec) {
+class SpecificationsBuilder<U>(
+    searchSpecAnnotation: SearchSpec,
+    predicateBuilder: PredicateBuilder<U>
+) {
 
     private var specs: Specification<U> = NullSpecification()
-    private var predicateBuilder: PredicateBuilder<U> = PredicateBuilder()
-    private var parser: CriteriaParser<U> = CriteriaParser(searchSpecAnnotation, PredicateBuilder())
-
-    fun withPredicateBuilder(predicateBuilder: PredicateBuilder<U>): SpecificationsBuilder<U> {
-        this.predicateBuilder = predicateBuilder
-        this.parser = CriteriaParser(searchSpecAnnotation, this.predicateBuilder)
-
-        return this;
-    }
+    private var parser: CriteriaParser<U> = CriteriaParser(searchSpecAnnotation, predicateBuilder)
 
     fun withSearch(search: String): SpecificationsBuilder<U> {
         specs = parser.parse(search)
@@ -36,6 +31,8 @@ class SpecificationsBuilder<U>(private val searchSpecAnnotation: SearchSpec) {
     fun build(): Specification<U> {
         return specs
     }
+
+    constructor(searchSpecAnnotation: SearchSpec) : this(searchSpecAnnotation, PredicateBuilder())
 }
 
 class NullSpecification<T> : Specification<T> {

@@ -28,6 +28,6 @@ class SpecificationImpl<T>(
         query: CriteriaQuery<*>,
         builder: CriteriaBuilder
     ): Predicate? {
-        return this.predicateBuilder.toPredicate(criteria, searchSpecAnnotation, root, query, builder);
+        return this.predicateBuilder.toPredicate(criteria, searchSpecAnnotation, root, query, builder)
     }
 }

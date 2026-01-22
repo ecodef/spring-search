@@ -10,9 +10,9 @@ import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import jakarta.persistence.metamodel.Attribute
 import jakarta.persistence.metamodel.ManagedType
-import org.hibernate.metamodel.model.domain.PersistentAttribute
 import java.util.ArrayList
 import kotlin.reflect.KClass
+import org.hibernate.metamodel.model.domain.PersistentAttribute
 
 open class PredicateBuilder<T> {
 
@@ -117,5 +117,4 @@ open class PredicateBuilder<T> {
             )
         }
     }
-
 }
