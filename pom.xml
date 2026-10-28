@@ -341,19 +341,6 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<!-- explicitly define maven-deploy-plugin after other to force exec order -->
-				<artifactId>maven-deploy-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>deploy</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>deploy</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>3.1.0</version>
@@ -396,10 +383,5 @@
 			<name>GitHub Packages</name>
 			<url>https://maven.pkg.github.com/ecodef/spring-search/</url>
 		</snapshotRepository>
-		<repository>
-			<id>ossrh</id>
-			<name>Maven Central</name>
-			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
 	</distributionManagement>
 </project>
