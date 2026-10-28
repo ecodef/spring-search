@@ -15,7 +15,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'semeru'
-          server-id: ossrh
+          server-id: central
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
       - name: Import GPG key
@@ -26,25 +26,17 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
       - name: List secret keys
         run:  gpg --list-secret-keys     
-      - name: Configure Maven settings.xml
+      - name: Verify bundle contents (POM, jar and signatures)
         run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<EOF
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-                                        https://maven.apache.org/xsd/settings-1.0.0.xsd">
-            <servers>
-              <server>
-                <id>central</id>
-                <username>${{ secrets.OSSRH_USERNAME }}</username>
-                <password>${{ secrets.OSSRH_TOKEN }}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
+          mvn --batch-mode -DskipTests verify
+          v=$(mvn --batch-mode -q -DforceStdout help:evaluate -Dexpression=project.version)
+          for f in target/spring-search-$v.jar target/spring-search-$v-sources.jar target/spring-search-$v-javadoc.jar \
+                   target/spring-search-$v.jar.asc target/spring-search-$v.pom.asc; do
+            test -s "$f" || { echo "Missing $f"; exit 1; }
+          done
+          test -s pom.xml
       - name: Publish package
-        run: mvn --batch-mode deploy
+        run: mvn --batch-mode -DskipTests deploy
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
