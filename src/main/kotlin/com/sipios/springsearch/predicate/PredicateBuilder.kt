@@ -13,8 +13,11 @@ import jakarta.persistence.metamodel.ManagedType
 import java.util.ArrayList
 import kotlin.reflect.KClass
 import org.hibernate.metamodel.model.domain.PersistentAttribute
+import org.slf4j.LoggerFactory
 
 open class PredicateBuilder<T> {
+
+    private val logger = LoggerFactory.getLogger(PredicateBuilder::class.java)
 
     open fun toPredicate(
         criteria: SearchCriteria,
@@ -93,7 +96,7 @@ open class PredicateBuilder<T> {
             val field = clazz.getDeclaredField(fieldName)
             val type = field.type
             return Collection::class.java.isAssignableFrom(type) || type.isArray
-        } catch (e: NoSuchFieldException) {
+        } catch (_: NoSuchFieldException) {
             return false
         }
     }
@@ -111,10 +114,8 @@ open class PredicateBuilder<T> {
                 strategy.parse(value?.toString(), fieldClass)
             }
         } catch (e: Exception) {
-            throw IllegalArgumentException(
-                "Could not parse input for the field $criteriaKey as a ${fieldClass.simpleName}",
-                e
-            )
+            logger.error("Could not parse input for the field $criteriaKey as a ${fieldClass.simpleName}: ${e.message}")
+            value
         }
     }
 }
