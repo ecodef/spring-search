@@ -2,6 +2,7 @@ package com.sipios.springsearch
 
 import com.fasterxml.jackson.databind.util.StdDateFormat
 import com.sipios.springsearch.anotation.SearchSpec
+import java.math.BigDecimal
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -489,6 +490,25 @@ class SpringSearchApplicationTest {
         ).withSearch("userAgeInSeconds:23222223.2").build()
         val specificationUsers = userRepository.findAll(specification)
         Assertions.assertTrue(setOf(middleUserId) == specificationUsers.map { user -> user.userId }.toSet())
+    }
+
+    @Test
+    fun canSearchUsersByBigDecimalCost() {
+        userRepository.save(Users(cost = BigDecimal("10.01")))
+        val matchingCostUserId = userRepository.save(Users(cost = BigDecimal("10.02"))).userId
+        val higherCostUserId = userRepository.save(Users(cost = BigDecimal("10.10"))).userId
+
+        val equalSpecification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("cost:10.02").build()
+        val equalCostUsers = userRepository.findAll(equalSpecification)
+        Assertions.assertEquals(setOf(matchingCostUserId), equalCostUsers.map { user -> user.userId }.toSet())
+
+        val greaterThanSpecification = SpecificationsBuilder<Users>(
+            SearchSpec::class.constructors.first().call("", true, emptyArray<String>())
+        ).withSearch("cost>10.02").build()
+        val higherCostUsers = userRepository.findAll(greaterThanSpecification)
+        Assertions.assertEquals(setOf(higherCostUserId), higherCostUsers.map { user -> user.userId }.toSet())
     }
 
     @Test
