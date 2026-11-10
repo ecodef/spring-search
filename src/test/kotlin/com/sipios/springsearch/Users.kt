@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.math.BigDecimal
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -74,5 +75,8 @@ data class Users(
     var uuid: UUID? = UUID.randomUUID(),
 
     @Column
-    var active: Boolean? = true
+    var active: Boolean? = true,
+
+    @Column
+    var cost: BigDecimal? = BigDecimal(100.0)
 )

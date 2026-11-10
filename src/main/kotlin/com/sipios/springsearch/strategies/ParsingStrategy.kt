@@ -5,6 +5,7 @@ import com.sipios.springsearch.anotation.SearchSpec
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
+import java.math.BigDecimal
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -121,6 +122,7 @@ interface ParsingStrategy {
                 fieldClass == Float::class -> FloatStrategy()
                 fieldClass == Int::class -> IntStrategy()
                 fieldClass == Long::class -> LongStrategy()
+                fieldClass == BigDecimal::class -> BigDecimalStrategy()
                 fieldClass.isSubclassOf(Enum::class) -> EnumStrategy()
                 fieldClass == Duration::class -> DurationStrategy()
                 fieldClass == LocalDate::class -> LocalDateStrategy()
