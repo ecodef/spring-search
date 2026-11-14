@@ -118,7 +118,7 @@ interface ParsingStrategy {
             return when {
                 isCollectionField -> CollectionStrategy()
                 fieldClass == Boolean::class -> BooleanStrategy()
-                fieldClass == Date::class -> DateStrategy()
+                Date::class.java.isAssignableFrom(fieldClass.java) -> DateStrategy()
                 fieldClass == Double::class -> DoubleStrategy()
                 fieldClass == Float::class -> FloatStrategy()
                 fieldClass == Int::class -> IntStrategy()
