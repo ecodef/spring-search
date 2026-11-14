@@ -25,7 +25,7 @@ class SpecificationImpl<T>(
     @Throws(ResponseStatusException::class)
     override fun toPredicate(
         root: Root<T>,
-        query: CriteriaQuery<*>,
+        query: CriteriaQuery<*>?,
         builder: CriteriaBuilder
     ): Predicate? {
         return this.predicateBuilder.toPredicate(criteria, searchSpecAnnotation, root, query, builder)

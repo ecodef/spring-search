@@ -4,12 +4,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.7</version>
+		<version>3.5.13</version>
 		<relativePath /> <!-- lookup parent from repository --> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>cz.ecodef</groupId>
 	<artifactId>spring-search</artifactId>
-	<version>0.3.8</version>
+	<version>0.3.9</version>
 	<name>spring-search</name>
 	<description>API for generating spring boot database queries</description>
 
