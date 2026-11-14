@@ -36,7 +36,7 @@ class SpecificationsBuilder<U>(
 }
 
 class NullSpecification<T> : Specification<T> {
-    override fun toPredicate(root: Root<T>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
+    override fun toPredicate(root: Root<T>, query: CriteriaQuery<*>?, criteriaBuilder: CriteriaBuilder): Predicate? {
         return null
     }
 }

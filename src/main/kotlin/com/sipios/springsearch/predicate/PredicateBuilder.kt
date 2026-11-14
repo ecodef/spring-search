@@ -23,7 +23,7 @@ open class PredicateBuilder<T> {
         criteria: SearchCriteria,
         searchSpec: SearchSpec,
         root: Root<T>,
-        query: CriteriaQuery<*>,
+        query: CriteriaQuery<*>?,
         builder: CriteriaBuilder
     ): Predicate? {
         val nestedKey = criteria.key.split(".")

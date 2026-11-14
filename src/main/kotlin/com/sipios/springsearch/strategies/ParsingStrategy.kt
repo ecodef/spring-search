@@ -16,6 +16,7 @@ import java.util.Date
 import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
+import org.hibernate.query.criteria.JpaExpression
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 
@@ -86,13 +87,13 @@ interface ParsingStrategy {
 
             SearchOperation.EQUALS -> builder.equal(path.get<Any>(fieldName), value)
             SearchOperation.NOT_EQUALS -> builder.notEqual(path.get<Any>(fieldName), value)
-            SearchOperation.STARTS_WITH -> builder.like(path[fieldName], "$value%")
-            SearchOperation.ENDS_WITH -> builder.like(path[fieldName], "%$value")
-            SearchOperation.CONTAINS -> builder.like((path.get<String>(fieldName).`as`(String::class.java)), "%$value%")
-            SearchOperation.DOESNT_START_WITH -> builder.notLike(path[fieldName], "$value%")
-            SearchOperation.DOESNT_END_WITH -> builder.notLike(path[fieldName], "%$value")
+            SearchOperation.STARTS_WITH -> builder.like((path.get<Any>(fieldName) as JpaExpression<*>).cast(String::class.java), "$value%")
+            SearchOperation.ENDS_WITH -> builder.like((path.get<Any>(fieldName) as JpaExpression<*>).cast(String::class.java), "%$value")
+            SearchOperation.CONTAINS -> builder.like((path.get<Any>(fieldName) as JpaExpression<*>).cast(String::class.java), "%$value%")
+            SearchOperation.DOESNT_START_WITH -> builder.notLike((path.get<Any>(fieldName) as JpaExpression<*>).cast(String::class.java), "$value%")
+            SearchOperation.DOESNT_END_WITH -> builder.notLike((path.get<Any>(fieldName) as JpaExpression<*>).cast(String::class.java), "%$value")
             SearchOperation.DOESNT_CONTAIN -> builder.notLike(
-                (path.get<String>(fieldName).`as`(String::class.java)),
+                (path.get<Any>(fieldName) as JpaExpression<*>).cast(String::class.java),
                 "%$value%"
             )
 
